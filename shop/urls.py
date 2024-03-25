@@ -5,7 +5,7 @@ from store.views import index, product_detail, add_to_cart, cart, delete_cart
 from accounts.views import signup, logout_user, login_user
 from shop import settings
 
-#..._user pour différencier des fonctions Djando
+#..._user pour différencier des fonctions Django
 
 
 urlpatterns = [
