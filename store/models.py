@@ -21,6 +21,7 @@ class Product(models.Model):
     stock = models.IntegerField(default=0)
     description = models.TextField(blank=True)
     thumbnail = models.ImageField(upload_to="products", blank=True, null=True)
+    stripe_id = models.CharField(max_length=98, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.stock})"
@@ -57,7 +58,8 @@ Panier (Cart)
 class Cart(models.Model):
     user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE) #ForeignKey(unique=True)
     orders = models.ManyToManyField(Order)
-
+    ordered = models.BooleanField(default=False)
+    ordered_date = models.DateTimeField(blank=True, null=True)
 
 
     def __str__(self):
