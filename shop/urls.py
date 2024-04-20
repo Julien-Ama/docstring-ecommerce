@@ -2,7 +2,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from store.views import index, product_detail, add_to_cart, cart, delete_cart, create_checkout_session, checkout_success, stripe_webhook
-from accounts.views import signup, logout_user, login_user
+from accounts.views import signup, logout_user, login_user, profile
 from shop import settings
 
 #..._user pour différencier des fonctions Django
@@ -11,6 +11,7 @@ from shop import settings
 urlpatterns = [
     path('', index, name='index'),
     path('admin/', admin.site.urls),
+    path('profile/', profile, name="profile"),
     path('signup/', signup, name="signup"),
     path('login/', login_user, name="login"),
     path('logout/', logout_user, name="logout"),

@@ -50,7 +50,6 @@ def cart(request):
 
 def create_checkout_session(request):
     cart = request.user.cart
-
     line_items = [{"price": order.product.stripe_id,
                    "quantity": order.quantity} for order in cart.orders.all()]
 
@@ -58,6 +57,8 @@ def create_checkout_session(request):
         locale="fr",
         line_items=line_items,
         mode='payment',
+        customer_email=request.user.email,
+        shipping_address_collection={"allowed_countries": ["FR","US", "CA"]},
         success_url=request.build_absolute_uri(reverse('checkout-success')),
         cancel_url='http://127.0.0.1:8000',
     )
