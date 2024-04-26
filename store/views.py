@@ -1,5 +1,5 @@
 from pprint import pprint
-
+import json
 import stripe
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from accounts.models import Shopper
+from accounts.models import Shopper, ShippingAddress
 from shop import settings
 from store.models import Product, Cart, Order
 
@@ -67,6 +67,9 @@ def create_checkout_session(request):
 
 
 def checkout_success(request):
+    # cart = Cart.objects.get(user=request.user)
+    # cart.delete()
+
     return render(request, 'store/success.html')
 
 
@@ -79,6 +82,34 @@ def delete_cart(request):
         cart.delete()
 
     return redirect('index')
+
+# @csrf_exempt
+# def stripe_webhook(request):
+#   payload = request.body
+#   event = None
+#
+#   try:
+#     event = stripe.Event.construct_from(
+#       json.loads(payload), stripe.api_key
+#     )
+#   except ValueError as e:
+#     # Invalid payload
+#     return HttpResponse(status=400)
+#
+#   # Handle the event
+#   if event.type == 'payment_intent.succeeded':
+#     payment_intent = event.data.object # contains a stripe.PaymentIntent
+#     # Then define and call a method to handle the successful payment intent.
+#     # handle_payment_intent_succeeded(payment_intent)
+#   elif event.type == 'payment_method.attached':
+#     payment_method = event.data.object # contains a stripe.PaymentMethod
+#     # Then define and call a method to handle the successful attachment of a PaymentMethod.
+#     # handle_payment_method_attached(payment_method)
+#   # ... handle other event types
+#   else:
+#     print('Unhandled event type {}'.format(event.type))
+#
+#   return HttpResponse(status=200)
 
 @csrf_exempt
 def stripe_webhook(request):
@@ -100,21 +131,60 @@ def stripe_webhook(request):
 
     if event['type'] == 'checkout.session.completed':
         data = event['data']['object']
-        return complete_order(data)
+        pprint(data)
+        try:
+            user = get_object_or_404(Shopper, email=data['customer_details']['email'])
+        except KeyError:
+            return HttpResponse("Invalid user email", status=404)
 
+        complete_order(data=data, user=user)
+        save_shipping_address(data=data, user=user)
+
+        return HttpResponse(status=200)
 
     # Passed signature verification
     return HttpResponse(status=200)
 
-def complete_order(data):
+def complete_order(data, user):
     pprint(data)
-    try:
-        user_email = data['customer_details']['email']
-    except KeyError:
-        return HttpResponse("Invalid user email", status=404)
 
-    user = get_object_or_404(Shopper, email=user_email)
-    user.cart.ordered = True
-    user.cart.ordered_date = timezone.now()
-    user.cart.save()
+    user.stripe_id = data['customer']
+    user.cart.delete()
+    user.save()
+    return HttpResponse(status=200)
+
+def save_shipping_address(data, user):
+    """
+      "shipping_details": {
+    "address": {
+      "city": "Toulouse",
+      "country": "FR",
+      "line1": "1 Rue des Champs Elys\u00e9es",
+      "line2": null,
+      "postal_code": "31500",
+      "state": ""
+    },
+    "name": "domicile"
+  },
+    """
+    try:
+        address = data["shipping"]["address"]
+        name = data["shipping"]["name"]
+        city = address["city"]
+        country = address["country"]
+        line1 = address["line1"]
+        line2 = address["line2"]
+        zip_code = address["postal_code"]
+    except KeyError:
+        return HttpResponse(status=400)
+
+    print(line2)
+    ShippingAddress.objects.get_or_create(user=user,
+                                          name=name,
+                                          city=city,
+                                          country=country.lower(),
+                                          address_1=line1,
+                                          address_2=line2 or "",
+                                          zip_code=zip_code)
+
     return HttpResponse(status=200)

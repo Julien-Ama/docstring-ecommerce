@@ -11,11 +11,13 @@
 </a>
 
 {% if user.is_authenticated %}
-    {{ user.username }}
+    {{ user }}
+<a href="{% url 'profile' %}">Profile</a>
 <a href="{% url 'logout' %}">Déconnexion</a>
 {% else %}
     <a href="{% url 'login' %}">Connexion</a>
     <a href="{% url 'signup' %}">S'inscrire</a>
+
 {% endif %}
 
 {% if user.cart and not user.cart.ordered %}

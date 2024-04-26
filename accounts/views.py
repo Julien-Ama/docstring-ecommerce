@@ -8,7 +8,7 @@ from accounts.forms import UserForm
 
 User = get_user_model()
 
-
+"""""""""
 def signup(request):
     if request.method == "POST":
         # Traitement du formulaire
@@ -20,7 +20,19 @@ def signup(request):
         return redirect('index')
 
     return render(request, 'accounts/signup.html')
+"""""""""
 
+def signup(request):
+    if request.method == "POST":
+        # Traitement du formulaire
+        email = request.POST.get("username")
+        password = request.POST.get("password")
+        user = User.objects.create_user(email=email,
+                                 password=password)
+        login(request, user)
+        return redirect('index')
+
+    return render(request, 'accounts/signup.html')
 
 def login_user(request):
     if request.method == "POST":
