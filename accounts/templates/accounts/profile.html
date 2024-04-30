@@ -20,4 +20,13 @@
 </form>
 
 
+<h1>Adresses de livraison</h1>
+
+{% for address in addresses %}
+
+{% include 'accounts/address.html' %}
+
+{% endfor %}
+
+
 {% endblock %}

@@ -11,7 +11,6 @@ from accounts.models import Shopper, ShippingAddress
 from shop import settings
 from store.models import Product, Cart, Order
 
-
 stripe.api_key = settings.STRIPE_API_KEY
 
 
@@ -20,14 +19,16 @@ def index(request):
 
     return render(request, 'store/index.html', context={"products": products})
 
+
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
     return render(request, 'store/detail.html', context={"product": product})
 
+
 def add_to_cart(request, slug):
     user = request.user
     product = get_object_or_404(Product, slug=slug)
-    cart, _ = Cart.objects.get_or_create(user=user) # _ 2 éléments à gauche et à droite du symbole d'égalité
+    cart, _ = Cart.objects.get_or_create(user=user)  # _ 2 éléments à gauche et à droite du symbole d'égalité
     order, created = Order.objects.get_or_create(user=user,
                                                  ordered=False,
                                                  product=product)
@@ -53,17 +54,23 @@ def create_checkout_session(request):
     line_items = [{"price": order.product.stripe_id,
                    "quantity": order.quantity} for order in cart.orders.all()]
 
-    session = stripe.checkout.Session.create(
-        locale="fr",
-        line_items=line_items,
-        mode='payment',
-        customer_email=request.user.email,
-        shipping_address_collection={"allowed_countries": ["FR","US", "CA"]},
-        success_url=request.build_absolute_uri(reverse('checkout-success')),
-        cancel_url='http://127.0.0.1:8000',
-    )
+    checkout_data = {
+        "locale": 'fr',
+        "line_items": line_items,
+        "mode": 'payment',
+        "shipping_address_collection": {"allowed_countries": ["FR", "US", "CA"]},
+        "success_url": request.build_absolute_uri(reverse('checkout-success')),
+        "cancel_url": request.build_absolute_uri(reverse('cart')),
+    }
 
-    return redirect(session.url, code=303)
+    if request.user.stripe_id:
+        checkout_data["customer"] = request.user.stripe_id
+    else:
+        checkout_data["customer_email"] = request.user.email
+
+    session = stripe.checkout.Session.create(**checkout_data)
+
+    return redirect(session.url)
 
 
 def checkout_success(request):
@@ -74,14 +81,14 @@ def checkout_success(request):
 
 
 def delete_cart(request):
-
     # cart = request.user.cart
     # if cart:
-    if cart := request.user.cart:       #walrus(morse)
+    if cart := request.user.cart:  # walrus(morse)
         cart.orders.all().delete()
         cart.delete()
 
     return redirect('index')
+
 
 # @csrf_exempt
 # def stripe_webhook(request):
@@ -145,6 +152,7 @@ def stripe_webhook(request):
     # Passed signature verification
     return HttpResponse(status=200)
 
+
 def complete_order(data, user):
     pprint(data)
 
@@ -152,6 +160,7 @@ def complete_order(data, user):
     user.cart.delete()
     user.save()
     return HttpResponse(status=200)
+
 
 def save_shipping_address(data, user):
     """
