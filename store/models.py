@@ -1,4 +1,5 @@
 from django.db import models
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -35,6 +36,9 @@ class Product(models.Model):
         self.slug = self.slug or slugify(self.name)
         super().save(*args, **kwargs)
 
+
+    def thumbnail_url(self):
+        return self.thumbnail.url if self.thumbnail else static("img/default.png")
 
 """
 Article (Order)

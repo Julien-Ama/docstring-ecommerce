@@ -1,6 +1,7 @@
 from pprint import pprint
 import json
 import stripe
+from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -33,7 +34,7 @@ def add_to_cart(request, slug):
 
     return redirect(reverse("store:product", kwargs={"slug": slug}))
 
-
+@login_required
 def cart(request):
     orders = Order.objects.filter(user=request.user)
     if orders.count() == 0:
