@@ -69,7 +69,7 @@ def profile(request):
         else:
             messages.add_message(request, messages.ERROR, "Le mot de passe n'est pas valide.")
 
-        return redirect("profile")
+        return redirect("accounts:profile")
 
     form = UserForm(instance=request.user)
     addresses = request.user.addresses.all()
@@ -81,4 +81,11 @@ def profile(request):
 def set_default_shipping_address(request, pk):
     address: ShippingAddress = get_object_or_404(ShippingAddress, pk=pk)
     address.set_default()
-    return redirect('profile')
+    return redirect('accounts:profile')
+
+
+@login_required
+def delete_address(request, pk):
+    address = get_object_or_404(ShippingAddress, pk=pk, user=request.user)
+    address.delete()
+    return redirect('accounts:profile')

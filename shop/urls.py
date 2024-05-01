@@ -1,26 +1,15 @@
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
-from store.views import index, product_detail, add_to_cart, cart, delete_cart, create_checkout_session, checkout_success, stripe_webhook
-from accounts.views import signup, logout_user, login_user, profile, set_default_shipping_address
+from django.urls import path, include
+from store.views import index
+
 from shop import settings
 
 #..._user pour différencier des fonctions Django
 
-
 urlpatterns = [
     path('', index, name='index'),
     path('admin/', admin.site.urls),
-    path('signup/', signup, name="signup"),
-    path('login/', login_user, name="login"),
-    path('logout/', logout_user, name="logout"),
-    path('profile/', profile, name="profile"),
-    path('profile/set_default_shipping/<int:pk>/', set_default_shipping_address, name="set-default-shipping"),
-    path('stripe-webhook/', stripe_webhook, name="stripe-webhook"),
-    path('cart/', cart, name="cart"),
-    path('cart/success', checkout_success, name="checkout-success"),
-    path('cart/create-checkout-session', create_checkout_session, name="create-checkout-session"),
-    path('cart/delete/', delete_cart, name="delete-cart"),
-    path('product/<str:slug>/', product_detail, name='product'),
-    path('product/<str:slug>/add-to-cart/', add_to_cart, name='add-to-cart'),
+    path('account/', include('accounts.urls')),
+    path('boutique/', include('store.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -19,8 +19,9 @@
     <button type="submit">Sauvegarder</button>
 </form>
 
-
-<h1>Adresses de livraison</h1>
+{% if addresses %}
+    <h1>Adresses de livraison</h1>
+{% endif %}
 
 {% for address in addresses %}
 

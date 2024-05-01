@@ -17,10 +17,14 @@
     </p>
 
     {% if not address.default %}
-        <a href="{% url 'set-default-shipping' address.pk%}">
+        <a href="{% url 'accounts:set-default-shipping' address.pk%}">
             définir par défaut
         </a>
 
     {% endif %}
+    
+    <p>
+        <a href="{% url 'accounts:delete-address' address.pk %}">Supprimer l'adresse</a>
+    </p>
 
 </div>

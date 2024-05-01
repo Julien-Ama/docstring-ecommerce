@@ -1,6 +1,7 @@
 from pprint import pprint
 import json
 import stripe
+from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -9,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from accounts.models import Shopper, ShippingAddress
 from shop import settings
+from store.forms import OrderForm
 from store.models import Product, Cart, Order
 
 stripe.api_key = settings.STRIPE_API_KEY
@@ -26,27 +28,53 @@ def product_detail(request, slug):
 
 
 def add_to_cart(request, slug):
-    user = request.user
-    product = get_object_or_404(Product, slug=slug)
-    cart, _ = Cart.objects.get_or_create(user=user)  # _ 2 éléments à gauche et à droite du symbole d'égalité
-    order, created = Order.objects.get_or_create(user=user,
-                                                 ordered=False,
-                                                 product=product)
+    user: Shopper = request.user
+    user.add_to_cart(slug=slug)
 
-    if created:
-        cart.orders.add(order)
-        cart.save()
-    else:
-        order.quantity += 1
-        order.save()
-
-    return redirect(reverse("product", kwargs={"slug": slug}))
+    return redirect(reverse("store:product", kwargs={"slug": slug}))
 
 
 def cart(request):
-    cart = get_object_or_404(Cart, user=request.user)
+    orders = Order.objects.filter(user=request.user)
+    if orders.count() == 0:
+        return redirect("index")
+    OrderFormSet = modelformset_factory(Order, form=OrderForm, extra=0)
+    formset = OrderFormSet(queryset=orders)
 
-    return render(request, 'store/cart.html', context={"orders": cart.orders.all()})
+
+    return render(request, 'store/cart.html', context={"forms": formset})
+
+
+def update_quantities(request):
+    OrderFormSet = modelformset_factory(Order, form=OrderForm, extra=0)
+    formset = OrderFormSet(request.POST, queryset=Order.objects.filter(user=request.user))
+    if formset.is_valid():
+        formset.save()
+
+    return redirect('store:cart')
+
+# def cart(request):
+#     orders = Order.objects.filter(user=request.user)
+#     if orders.count() == 0:
+#         return redirect("index")
+#
+#     OrderFormSet = modelformset_factory(Order, form=OrderForm, extra=0)
+#     formset = OrderFormSet(queryset=orders)
+#
+#     return render(request, 'store/cart.html', context={"forms": formset})
+#
+#
+# def update_quantities(request):
+#     OrderFormSet = modelformset_factory(Order, form=OrderForm, extra=0)
+#     formset = OrderFormSet(request.POST, queryset=Order.objects.filter(user=request.user))
+#     if formset.is_valid():
+#         formset.save()
+#         for form in formset:
+#             if form.cleaned_data['quantity'] == 0:
+#                 form.instance.delete()
+#
+#     return redirect('cart')
+
 
 
 def create_checkout_session(request):
@@ -59,8 +87,8 @@ def create_checkout_session(request):
         "line_items": line_items,
         "mode": 'payment',
         "shipping_address_collection": {"allowed_countries": ["FR", "US", "CA"]},
-        "success_url": request.build_absolute_uri(reverse('checkout-success')),
-        "cancel_url": request.build_absolute_uri(reverse('cart')),
+        "success_url": request.build_absolute_uri(reverse('store:checkout-success')),
+        "cancel_url": request.build_absolute_uri(reverse('store:cart')),
     }
 
     if request.user.stripe_id:
