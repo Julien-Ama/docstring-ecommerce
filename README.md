@@ -12,7 +12,8 @@ En dehors de cela, je vais essayer d'intégrer Bootstrap avec le projet pour la 
 pour lancer le projet vous aurez besoin de:
 
 -installer Django
-- lancer les migrations pour nourrir la base de donner:
+
+- lancer les migrations pour nourrir la base de données:
   -python manage.py makemigrations
   -python manege.py migrate
 
