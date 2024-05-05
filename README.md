@@ -8,3 +8,12 @@ Le projet fonctionne à merveille mais il y a certaines améliorations à faire 
 -Problème avec le test "def test_valid_login" avec les 2 dernières lignes que j'ai mises en commentaire.
 
 En dehors de cela, je vais essayer d'intégrer Bootstrap avec le projet pour la partie esthétique et responsive ainsi que de travailler sur l'hébergement en ligne avec Digital Ocean.
+
+pour lancer le projet vous aurez besoin de:
+
+-installer Django
+- lancer les migrations pour nourrir la base de donner:
+  -python manage.py makemigrations
+  -python manege.py migrate
+
+- créer un compte stripe pour les clés identifiant et d'api: https://dashboard.stripe.com/dashboard
